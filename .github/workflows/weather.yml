@@ -20,4 +20,5 @@ jobs:
       env:
         LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
         CWB_API_KEY: ${{ secrets.CWB_API_KEY }}
+        EPA_API_KEY: ${{ secrets.EPA_API_KEY }}  
       run: python push_weather.py

@@ -32,30 +32,46 @@ def get_weather():
 
 def get_air_quality():
     try:
-        url = f"https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key={EPA_API_KEY}&limit=10&offset=0&filters=county,eq,臺北市|sitename,ne,中山"
-        res = requests.get(url)  # 先取得回應物件，不要直接 .json()
+        url = "https://data.moenv.gov.tw/api/v2/aqx_p_432"
+        params = {
+            "api_key": EPA_API_KEY if EPA_API_KEY else "opendata",
+            "limit": 1000,
+            "offset": 0,
+            # 篩選台北市資料（requests 會自動 URL encode）
+            "filters": "county eq 臺北市"
+        }
+        res = requests.get(url, params=params, timeout=15)
 
-        # 【除錯步驟】印出 HTTP 狀態碼與原始回應內容
-        print(f"空氣品質 API 狀態碼：{res.status_code}")
-        print(f"空氣品質 API 原始回應：\n{res.text}")
+        # --- debug 輸出（會出現在 Actions logs） ---
+        print("EPA Request URL:", res.url)
+        print("EPA Status code:", res.status_code)
+        print("EPA Response preview:", res.text[:800])  # 只顯示前800字
 
-        # 先確認請求成功 (狀態碼 200)，再進行 JSON 解析
-        if res.status_code == 200:
+        if res.status_code != 200:
+            return f"⚠️ 空氣品質 API 請求失敗，狀態：{res.status_code}"
+
+        # 嘗試解析 JSON
+        try:
             data = res.json()
-            # 檢查 'records' 是否存在且不為空
-            if data.get('records') and len(data['records']) > 0:
-                site = data['records'][0]
-                aqi = site['aqi']
-                status = site['status']
-                return f"🌫️ 空氣品質指數（AQI）：{aqi}（{status}）"
-            else:
-                return "⚠️ 空氣品質資料取得成功，但內容為空。"
-        else:
-            return f"⚠️ 空氣品質 API 請求失敗，狀態碼：{res.status_code}"
+        except ValueError as e:
+            return f"⚠️ 空氣品質 JSON 解析失敗：{e}"
+
+        records = data.get("records", [])
+        if not records:
+            return "⚠️ 空氣品質資料為空（records 空）"
+
+        # 優先找 "中山" 站，找不到就取第一筆
+        site = next((r for r in records if r.get("sitename") == "中山"), records[0])
+        aqi = site.get("aqi", "N/A")
+        status = site.get("status", "N/A")
+        pm25 = site.get("pm2.5", site.get("pm25", "N/A"))  # 不同欄位名兼容處理
+        sitename = site.get("sitename", "未知站")
+
+        return f"🌫️ 空氣品質（{sitename}）\nAQI：{aqi}（{status}）\nPM2.5：{pm25} µg/m³"
 
     except Exception as e:
-        # 捕捉其他可能的錯誤，例如網路連線問題
         return f"⚠️ 空氣品質資料處理時發生錯誤：{e}"
+
 
 def main():
     weather = get_weather()
