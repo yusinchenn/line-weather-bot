@@ -1,25 +1,23 @@
-name: Daily LINE Weather Bot
+
+name: Daily Weather Push
 
 on:
   schedule:
-    - cron: '0 23 * * *'  # 每天 UTC 時間 23:00 = 台灣時間 7:00
-  workflow_dispatch:
+    - cron: '0 23 * * *' # 每日 07:00 台灣時間（+8）
 
 jobs:
-  run:
+  push:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-
+    - uses: actions/checkout@v2
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v2
       with:
         python-version: '3.10'
-
     - name: Install dependencies
       run: pip install -r requirements.txt
-
-    - name: Run weather push script
+    - name: Run push script
+      env:
+        LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
+        CWB_API_KEY: ${{ secrets.CWB_API_KEY }}
       run: python push_weather.py
