@@ -1,0 +1,25 @@
+name: Daily LINE Weather Bot
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # 每天 UTC 時間 23:00 = 台灣時間 7:00
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run weather push script
+      run: python push_weather.py
