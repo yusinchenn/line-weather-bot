@@ -35,7 +35,7 @@ def get_air_quality():
     siteid = 12  # URL encode 中文
     url = (
         f"https://data.moenv.gov.tw/api/v2/aqx_p_432"
-        f"?format=JSON&offset=0&limit=1&api_key={EPA_API_KEY}&filters=siteid eq {siteid}"
+        f"?format=JSON&offset=0&limit=1&api_key={EPA_API_KEY}"
     )
 
     res = requests.get(url)
