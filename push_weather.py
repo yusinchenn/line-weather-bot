@@ -8,6 +8,8 @@ from linebot.models import TextSendMessage
 LINE_TOKEN = os.getenv('LINE_TOKEN')
 CWB_API_KEY = os.getenv('CWB_API_KEY')
 EPA_API_KEY = os.getenv('EPA_API_KEY')
+if not EPA_API_KEY:
+    print("錯誤：找不到 EPA_API_KEY 環境變數。")
 line_bot_api = LineBotApi(LINE_TOKEN)
 
 from linebot.v3.messaging import (

@@ -16,6 +16,16 @@ jobs:
         python-version: '3.10'
     - name: Install dependencies
       run: pip install -r requirements.txt
+    - name: Check API Key
+      run: |
+        if [ -z "$EPA_API_KEY" ]; then
+          echo "::error::EPA_API_KEY is not set."
+          exit 1
+        else
+          echo "EPA_API_KEY is successfully set."
+        fi
+      env:
+        EPA_API_KEY: ${{ secrets.EPA_API_KEY }}
     - name: Run push script
       env:
         LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
