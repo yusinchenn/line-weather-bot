@@ -32,11 +32,10 @@ def get_weather():
         return f"⚠️ 天氣資料取得失敗：{e}"
 
 def get_air_quality():
-    api_key = os.getenv('EPA_API_KEY')
-    county = quote("臺北市")  # URL encode 中文
+    siteid = 12  # URL encode 中文
     url = (
         f"https://data.moenv.gov.tw/api/v2/aqx_p_432"
-        f"?format=JSON&offset=0&limit=1&api_key={api_key}&filters=county eq {county}"
+        f"?format=JSON&offset=0&limit=1&api_key={EPA_API_KEY}&filters=siteid eq {siteid}"
     )
 
     res = requests.get(url)
