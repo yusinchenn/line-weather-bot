@@ -32,28 +32,40 @@ def get_weather():
         return f"⚠️ 天氣資料取得失敗：{e}"
 
 def get_air_quality():
-    siteid = 12  # URL encode 中文
     url = (
         f"https://data.moenv.gov.tw/api/v2/aqx_p_432"
-        f"?format=JSON&offset=0&limit=1&api_key={EPA_API_KEY}"
+        f"?format=JSON&offset=0&api_key={EPA_API_KEY}"
     )
 
-    res = requests.get(url)
-    print("空氣品質 API 狀態碼：", res.status_code)
-    print("空氣品質 API 原始回應：", res.text)  # Debug 用
+    try:
+        res = requests.get(url)
+        res.raise_for_status()  # 如果請求失敗會拋出例外
+        data = res.json()
 
-    res.raise_for_status()
-    data = res.json()
+        if 'records' not in data or not data['records']:
+            return "⚠️ 無法取得空氣品質資料"
 
-    if 'records' not in data or not data['records']:
-        return "⚠️ 無法取得空氣品質資料"
+        # 使用列表推導式篩選出 "中山" 測站的資料
+        zhongshan_records = [
+            record for record in data["records"] if record["sitename"] == "中山"
+        ]
 
-    site = data['records'][0]
-    aqi = site.get('aqi', 'N/A')
-    status = site.get('status', '未知')
-    return f"🌫️ 空氣品質指數（AQI）：{aqi}（{status}）"
+        if not zhongshan_records:
+            return "⚠️ 找不到中山測站的空氣品質資料"
 
+        # 從篩選後的列表中取出第一筆資料
+        site = zhongshan_records[0]
+        sitename = site.get('sitename', 'N/A')
+        aqi = site.get('aqi', 'N/A')
+        status = site.get('status', '未知')
+        
+        return f"🌫️ {sitename}測站空氣品質指數（AQI）：{aqi}（{status}）"
 
+    except requests.exceptions.RequestException as e:
+        return f"⚠️ 網路連線錯誤：{e}"
+    except Exception as e:
+        return f"⚠️ 發生未知錯誤：{e}"
+    
 def main():
     weather = get_weather()
     air = get_air_quality() # 使用上面修正過的函式
