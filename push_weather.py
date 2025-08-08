@@ -34,7 +34,7 @@ def get_weather():
 def get_air_quality():
     url = (
         f"https://data.moenv.gov.tw/api/v2/aqx_p_432"
-        f"?format=JSON&offset=0&api_key=9864d9f3-4322-4a2d-af8a-d5a81e37209e"
+        f"?format=JSON&offset=0&api_key={EPA_API_KEY}"
     )
 
     try:
