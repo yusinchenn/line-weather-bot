@@ -38,23 +38,50 @@ def get_uv_index():
         url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization={CWB_API_KEY}&format=JSON&StationId=466920&WeatherElement=UVIndex&GeoInfo="
         res = requests.get(url).json()
 
-        # 取得紫外線指數
-        location = res['records']['location'][0]
-        uv = float(location['weatherElement'][0]['elementValue'])
+        stations = data.get("records", {}).get("Station") or []
+        if not stations:
+            return "⚠️ 無法取得紫外線資料（records 欄位為空）"
 
-        # 判斷紫外線等級
-        if uv <= 2:
+        # 如果有給 station_name，試著在 stations 中找到該站；否則取第一筆
+        if station_name:
+            record = next((s for s in stations if s.get("StationName") == station_name), stations[0])
+        else:
+            record = stations[0]
+
+        # WeatherElement 裡面應包含 UVIndex（依你提供範例）
+        weather_elem = record.get("WeatherElement") or {}
+        uv_raw = weather_elem.get("UVIndex")
+
+        if uv_raw is None:
+            # 若欄位不存在，嘗試取其他可能名稱（兼容性）
+            uv_raw = weather_elem.get("UVI") or weather_elem.get("UV")
+
+        if uv_raw is None:
+            return "⚠️ 紫外線資料缺失"
+
+        # 解析成數字做分級判斷
+        try:
+            uv_val = float(uv_raw)
+        except Exception:
+            # 若無法轉數字，仍回傳原始字串但標示等級為未知
+            return f"☀️ 紫外線指數：{uv_raw}（等級未知）"
+
+        # 分級（依照你給的圖示）
+        if uv_val <= 2:
             level = "低量級"
-        elif uv <= 5:
+        elif uv_val <= 5:
             level = "中量級"
-        elif uv <= 7:
+        elif uv_val <= 7:
             level = "高量級"
-        elif uv <= 10:
+        elif uv_val <= 10:
             level = "過量級"
         else:
             level = "危險級"
 
-        return f"☀️ 紫外線指數：{uv}（{level}）"
+        # 回傳格式：數值 + (等級)
+        # 若數值為整數就顯示整數，不然顯示一位小數
+        uv_display = int(uv_val) if uv_val.is_integer() else round(uv_val, 1)
+        return f"☀️ 紫外線指數：{uv_display}（{level}）"
     except Exception as e:
         return f"⚠️ 紫外線資料取得失敗：{e}"
 
