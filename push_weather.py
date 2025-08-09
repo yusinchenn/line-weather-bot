@@ -38,9 +38,7 @@ def get_uv_index():
     data = requests.get(url).json()
 
     try:
-        station = data["records"]["Station"][0]
-        uv_val = float(station["WeatherElement"]["UVIndex"])
-        obs_time = station["ObsTime"]["DateTime"]
+        uv_val = float(data["records"]["Station"][0]["WeatherElement"]["UVIndex"])
 
         # UV 等級判斷
         if uv_val <= 2:
@@ -54,11 +52,10 @@ def get_uv_index():
         else:
             level = "危險級"
 
-        return f"🌞 紫外線指數：{uv_val}（{level}）\n觀測時間：{obs_time}"
+        return f"🌞 紫外線指數：{uv_val}（{level}）"
 
     except (KeyError, IndexError, ValueError) as e:
         return f"⚠️ 紫外線資料取得失敗：{e}"
-
 
 def get_air_quality():
     url = (
