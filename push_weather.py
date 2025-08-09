@@ -1,8 +1,20 @@
 import os
 import requests
 from urllib.parse import quote
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
+
+LINE_TOKEN = os.getenv('LINE_TOKEN')
 CWB_API_KEY = os.getenv('CWB_API_KEY')
 EPA_API_KEY = os.getenv('EPA_API_KEY')
+
+from linebot.v3.messaging import (
+    Configuration,
+    ApiClient,
+    MessagingApi,
+    BroadcastRequest,
+    TextMessage
+)
 
 def get_weather():
     try:
@@ -81,6 +93,19 @@ def main():
     air = get_air_quality()
     message = f"{weather}\n{uv}\n{air}"
     print(message)
+
+    configuration = Configuration(access_token=LINE_TOKEN)
+    with ApiClient(configuration) as api_client:
+        messaging_api = MessagingApi(api_client)
+        broadcast_request = BroadcastRequest(
+            messages=[TextMessage(text=message)]
+        )
+        try:
+            messaging_api.broadcast(broadcast_request)
+            print("LINE 訊息廣播成功！")
+        except Exception as e:
+            print(f"LINE 訊息廣播失敗：{e}")
+
 
 if __name__ == "__main__":
     main()
