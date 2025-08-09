@@ -35,15 +35,26 @@ def get_weather():
 
 def get_uv_index():
     try:
-        url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0005-001?Authorization={CWB_API_KEY}&format=JSON"
+        url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization={CWB_API_KEY}&format=JSON&StationId=466920&WeatherElement=UVIndex&GeoInfo="
         res = requests.get(url).json()
 
-        # 找台北的觀測站，例如 "臺北"
-        for location in res['records']['location']:
-            if '臺北' in location['locationName']:
-                uv = location['weatherElement'][0]['elementValue']
-                return f"☀️ 紫外線指數：{uv}"
-        return "⚠️ 找不到紫外線資料"
+        # 取得紫外線指數
+        location = res['records']['location'][0]
+        uv = float(location['weatherElement'][0]['elementValue'])
+
+        # 判斷紫外線等級
+        if uv <= 2:
+            level = "低量級"
+        elif uv <= 5:
+            level = "中量級"
+        elif uv <= 7:
+            level = "高量級"
+        elif uv <= 10:
+            level = "過量級"
+        else:
+            level = "危險級"
+
+        return f"☀️ 紫外線指數：{uv}（{level}）"
     except Exception as e:
         return f"⚠️ 紫外線資料取得失敗：{e}"
 
