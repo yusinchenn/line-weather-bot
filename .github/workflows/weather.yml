@@ -3,6 +3,7 @@ name: Daily Weather Push
 on:
   schedule:
     - cron: '0 23 * * *' # 每日 07:00 台灣時間（+8）
+    - cron: '0 3 * * *'  # 每日 11:00 台灣時間
   workflow_dispatch: # 允許手動觸發
 
 jobs:

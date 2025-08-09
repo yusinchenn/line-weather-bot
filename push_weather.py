@@ -33,6 +33,21 @@ def get_weather():
     except Exception as e:
         return f"⚠️ 天氣資料取得失敗：{e}"
 
+def get_uv_index():
+    try:
+        url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0005-001?Authorization={CWB_API_KEY}&format=JSON"
+        res = requests.get(url).json()
+
+        # 找台北的觀測站，例如 "臺北"
+        for location in res['records']['location']:
+            if '臺北' in location['locationName']:
+                uv = location['weatherElement'][0]['elementValue']
+                return f"☀️ 紫外線指數：{uv}"
+        return "⚠️ 找不到紫外線資料"
+    except Exception as e:
+        return f"⚠️ 紫外線資料取得失敗：{e}"
+
+
 def get_air_quality():
     url = (
         f"https://data.moenv.gov.tw/api/v2/aqx_p_432"
@@ -70,10 +85,10 @@ def get_air_quality():
     
 def main():
     weather = get_weather()
-    air = get_air_quality() # 使用上面修正過的函式
-    message = f"{weather}\n{air}"
+    uv = get_uv_index()
+    air = get_air_quality()
+    message = f"{weather}\n{uv}\n{air}"
 
-    # --- LINE SDK v3 寫法 ---
     configuration = Configuration(access_token=LINE_TOKEN)
     with ApiClient(configuration) as api_client:
         messaging_api = MessagingApi(api_client)
