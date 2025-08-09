@@ -1,3 +1,4 @@
+import os
 import requests
 from urllib.parse import quote
 CWB_API_KEY = os.getenv('CWB_API_KEY')
