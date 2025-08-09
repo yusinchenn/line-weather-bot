@@ -8,9 +8,6 @@ from linebot.models import TextSendMessage
 LINE_TOKEN = os.getenv('LINE_TOKEN')
 CWB_API_KEY = os.getenv('CWB_API_KEY')
 EPA_API_KEY = os.getenv('EPA_API_KEY')
-if not EPA_API_KEY:
-    print("錯誤：找不到 EPA_API_KEY 環境變數。")
-line_bot_api = LineBotApi(LINE_TOKEN)
 
 from linebot.v3.messaging import (
     Configuration,
@@ -34,11 +31,10 @@ def get_weather():
         return f"⚠️ 天氣資料取得失敗：{e}"
 
 def get_uv_index():
-    url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization={CWB_API_KEY}&format=JSON&StationId=466920&WeatherElement=UVIndex&GeoInfo="
-    data = requests.get(url).json()
-
     try:
-        uv_val = float(data["records"]["Station"][0]["WeatherElement"]["UVIndex"])
+        url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization={CWB_API_KEY}&format=JSON&StationId=466920"
+        data = requests.get(url).json()
+        uv_val = data["records"]["Station"][0]["WeatherElement"]["UVIndex"]
 
         # UV 等級判斷
         if uv_val <= 2:
@@ -54,7 +50,7 @@ def get_uv_index():
 
         return f"🌞 紫外線指數：{uv_val}（{level}）"
 
-    except (KeyError, IndexError, ValueError) as e:
+    except Exception as e:
         return f"⚠️ 紫外線資料取得失敗：{e}"
 
 def get_air_quality():
