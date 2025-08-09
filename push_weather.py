@@ -34,7 +34,7 @@ def get_uv_index():
     try:
         url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization={CWB_API_KEY}&format=JSON&StationId=466920"
         data = requests.get(url).json()
-        uv_val = data["records"]["Station"][0]["WeatherElement"]["UVIndex"]
+        uv_val = int(data["records"]["Station"][0]["WeatherElement"]["UVIndex"])
 
         # UV 等級判斷
         if uv_val <= 2:
