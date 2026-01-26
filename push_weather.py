@@ -56,20 +56,44 @@ def get_uv_index():
 
 def get_air_quality():
     try:
-        url = (f"https://data.moenv.gov.tw/api/v2/aqx_p_432?format=JSON&offset=0&api_key={EPA_API_KEY}")
-        qua = requests.get(url).json()
+        # 建議使用 params 傳遞參數，避免網址拼接錯誤，也自動處理編碼
+        url = "https://data.moenv.gov.tw/api/v2/aqx_p_432"
+        params = {
+            "format": "json",
+            "offset": "0",
+            "limit": "1000", # 建議加上 limit，確保能抓到所有站點
+            "api_key": EPA_API_KEY
+        }
+        
+        response = requests.get(url, params=params)
+        response.raise_for_status() # 檢查 HTTP 狀態碼 (如 403, 500 會直接報錯)
+        
+        qua = response.json()
 
-        # 使用列表推導式篩選出 "中山" 測站的資料
+        # --- 偵錯與結構檢查 ---
+        if isinstance(qua, list):
+            # 如果回傳的是 List，可能是錯誤訊息列表，或結構不同
+            return f"⚠️ 空氣品質 API 回傳格式異常 (List): {qua[:1]}"
+            
+        if "records" not in qua:
+             # 如果沒有 records 欄位，可能是 Key 錯誤或額度不足
+            return f"⚠️ 空氣品質 API 回傳缺少 records 欄位: {qua.get('message', '未知錯誤')}"
+        # --------------------
+
+        # 篩選 "中山" 測站
         zhongshan_records = [
-            record for record in qua["records"] if record["sitename"] == "中山"
+            record for record in qua["records"] 
+            if record.get("sitename") == "中山" # 使用 .get 防止欄位不存在報錯
         ]
 
-        # 從篩選後的列表中取出第一筆資料
+        if not zhongshan_records:
+            return "⚠️ 找不到「中山」測站的空氣品質資料"
+
         site = zhongshan_records[0]
         aqi = site.get('aqi', 'N/A')
         status = site.get('status', '未知')
         
-        return f"🌫️空氣品質指數（AQI）：{aqi}（{status}）"
+        return f"🌫️ 空氣品質指數（AQI）：{aqi}（{status}）"
 
     except Exception as e:
         return f"⚠️ 空氣品質資料取得失敗：{e}"
