@@ -56,42 +56,45 @@ def get_uv_index():
 
 def get_air_quality():
     try:
-        # 建議使用 params 傳遞參數，避免網址拼接錯誤，也自動處理編碼
+        # 建議使用 aqx_p_432 (全台空氣品質指標)，因為它直接包含計算好的 AQI 與狀態
+        # 如果您堅持要用 aqx_p_200，請將下方的 432 改為 200，但欄位可能需要調整
         url = "https://data.moenv.gov.tw/api/v2/aqx_p_432"
+        
         params = {
             "format": "json",
             "offset": "0",
-            "limit": "1000", # 建議加上 limit，確保能抓到所有站點
+            "limit": "1000",
             "api_key": EPA_API_KEY
         }
         
         response = requests.get(url, params=params)
-        response.raise_for_status() # 檢查 HTTP 狀態碼 (如 403, 500 會直接報錯)
-        
-        qua = response.json()
+        response.raise_for_status()
+        data = response.json()
 
-        # --- 偵錯與結構檢查 ---
-        if isinstance(qua, list):
-            # 如果回傳的是 List，可能是錯誤訊息列表，或結構不同
-            return f"⚠️ 空氣品質 API 回傳格式異常 (List): {qua[:1]}"
-            
-        if "records" not in qua:
-             # 如果沒有 records 欄位，可能是 Key 錯誤或額度不足
-            return f"⚠️ 空氣品質 API 回傳缺少 records 欄位: {qua.get('message', '未知錯誤')}"
-        # --------------------
+        # --- 核心修正：自動判斷回傳格式 ---
+        records = []
+        if isinstance(data, list):
+            # 情況 A: API 直接回傳列表 (如您錯誤訊息所示)
+            records = data
+        elif isinstance(data, dict):
+            # 情況 B: API 回傳字典，資料在 records 欄位中
+            records = data.get("records", [])
+        else:
+            return f"⚠️ API 回傳格式無法解析: {type(data)}"
+        # -------------------------------
 
-        # 篩選 "中山" 測站
-        zhongshan_records = [
-            record for record in qua["records"] 
-            if record.get("sitename") == "中山" # 使用 .get 防止欄位不存在報錯
-        ]
+        # 尋找「中山」測站 (同時支援 sitename 與 SiteName)
+        target_station = next(
+            (r for r in records if r.get("sitename") == "中山" or r.get("SiteName") == "中山"), 
+            None
+        )
 
-        if not zhongshan_records:
+        if not target_station:
             return "⚠️ 找不到「中山」測站的空氣品質資料"
 
-        site = zhongshan_records[0]
-        aqi = site.get('aqi', 'N/A')
-        status = site.get('status', '未知')
+        # 取得 AQI 與 狀態 (同時支援大小寫 key)
+        aqi = target_station.get('aqi') or target_station.get('AQI') or 'N/A'
+        status = target_station.get('status') or target_station.get('Status') or '未知'
         
         return f"🌫️ 空氣品質指數（AQI）：{aqi}（{status}）"
 
